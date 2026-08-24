@@ -90,11 +90,8 @@ def get_embeddings(provider: str = None):
     """
     Trả về Embeddings instance tương ứng với provider được chọn.
 
-    Lưu ý quan trọng:
-        - Anthropic KHÔNG có Embeddings API → tự động fallback về OpenAI embeddings
-        - OpenRouter cũng dùng OpenAI embeddings (không có API embeddings riêng)
-        - Ollama cần model embedding riêng (mặc định: nomic-embed-text)
-          Cài đặt: ollama pull nomic-embed-text
+    Lưu ý: LUÔN dùng OLLAMA EMBEDDINGS (miễn phí, local, không giới hạn)
+    Model: nomic-embed-text (cần chạy: ollama pull nomic-embed-text)
 
     Args:
         provider: "openai" | "gemini" | "anthropic" | "ollama" | "openrouter"
@@ -103,43 +100,8 @@ def get_embeddings(provider: str = None):
     Returns:
         Embeddings instance sẵn sàng sử dụng
     """
-    provider = (provider or config.PROVIDER).lower()
-
-    if provider in ("openai", "openrouter"):
-        from langchain_openai import OpenAIEmbeddings
-        kwargs = {
-            "model": config.OPENAI_EMBEDDING_MODEL,
-            "api_key": config.OPENAI_API_KEY,
-        }
-        if config.OPENAI_BASE_URL:
-            kwargs["base_url"] = config.OPENAI_BASE_URL
-        return OpenAIEmbeddings(**kwargs)
-
-    elif provider == "gemini":
-        from langchain_google_genai import GoogleGenerativeAIEmbeddings
-        return GoogleGenerativeAIEmbeddings(
-            model=config.GEMINI_EMBEDDING_MODEL,
-            google_api_key=config.GOOGLE_API_KEY,
-        )
-
-    elif provider == "anthropic":
-        # Anthropic không cung cấp Embeddings API → dùng OpenAI thay thế
-        print("⚠️  Anthropic không có Embeddings API — đang dùng OpenAI embeddings thay thế.")
-        from langchain_openai import OpenAIEmbeddings
-        return OpenAIEmbeddings(
-            model=config.OPENAI_EMBEDDING_MODEL,
-            api_key=config.OPENAI_API_KEY,
-        )
-
-    elif provider == "ollama":
-        from langchain_ollama import OllamaEmbeddings
-        return OllamaEmbeddings(
-            model=config.OLLAMA_EMBEDDING_MODEL,
-            base_url=config.OLLAMA_BASE_URL,
-        )
-
-    else:
-        raise ValueError(
-            f"Provider không hợp lệ: '{provider}'. "
-            "Chọn một trong: openai, gemini, anthropic, ollama, openrouter"
-        )
+    from langchain_ollama import OllamaEmbeddings
+    return OllamaEmbeddings(
+        model=config.OLLAMA_EMBEDDING_MODEL,
+        base_url=config.OLLAMA_BASE_URL,
+    )
